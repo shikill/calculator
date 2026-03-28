@@ -1,5 +1,3 @@
-history = []
-
 def add(a, b):
     return a + b
 
@@ -14,23 +12,12 @@ def divide(a, b):
         raise ValueError("0で割ることはできません")
     return a / b
 
-def power(a, b):
-    return a ** b
-
 def get_number(prompt):
     while True:
         try:
             return float(input(prompt))
         except ValueError:
             print("有効な数値を入力してください。")
-
-def show_history():
-    if not history:
-        print("計算履歴はありません。")
-    else:
-        print("\n=== 計算履歴 ===")
-        for i, entry in enumerate(history, 1):
-            print(f"  {i}. {entry}")
 
 def main():
     print("=== 簡単な計算機 ===")
@@ -39,28 +26,22 @@ def main():
         "2": ("引き算 (-)", subtract),
         "3": ("掛け算 (*)", multiply),
         "4": ("割り算 (/)", divide),
-        "5": ("べき乗 (**)", power),
     }
 
     while True:
         print("\n演算を選択してください:")
         for key, (name, _) in operations.items():
             print(f"  {key}. {name}")
-        print("  6. 計算履歴を表示")
-        print("  7. 終了")
+        print("  5. 終了")
 
-        choice = input("\n選択 (1-7): ").strip()
+        choice = input("\n選択 (1-5): ").strip()
 
-        if choice == "7":
+        if choice == "5":
             print("計算機を終了します。")
             break
 
-        if choice == "6":
-            show_history()
-            continue
-
         if choice not in operations:
-            print("無効な選択です。1〜7を入力してください。")
+            print("無効な選択です。1〜5を入力してください。")
             continue
 
         name, func = operations[choice]
@@ -69,9 +50,7 @@ def main():
 
         try:
             result = func(a, b)
-            expr = f"{a} {name.split()[1]} {b} = {result}"
-            print(f"結果: {expr}")
-            history.append(expr)
+            print(f"結果: {a} {name.split()[1]} {b} = {result}")
         except ValueError as e:
             print(f"エラー: {e}")
 
