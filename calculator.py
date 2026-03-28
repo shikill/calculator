@@ -12,6 +12,9 @@ def divide(a, b):
         raise ValueError("0で割ることはできません")
     return a / b
 
+def power(a, b):
+    return a ** b
+
 def get_number(prompt):
     while True:
         try:
@@ -26,22 +29,23 @@ def main():
         "2": ("引き算 (-)", subtract),
         "3": ("掛け算 (*)", multiply),
         "4": ("割り算 (/)", divide),
+        "5": ("べき乗 (**)", power),
     }
 
     while True:
         print("\n演算を選択してください:")
         for key, (name, _) in operations.items():
             print(f"  {key}. {name}")
-        print("  5. 終了")
+        print("  6. 終了")
 
-        choice = input("\n選択 (1-5): ").strip()
+        choice = input("\n選択 (1-6): ").strip()
 
-        if choice == "5":
+        if choice == "6":
             print("計算機を終了します。")
             break
 
         if choice not in operations:
-            print("無効な選択です。1〜5を入力してください。")
+            print("無効な選択です。1〜6を入力してください。")
             continue
 
         name, func = operations[choice]
