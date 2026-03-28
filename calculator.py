@@ -31,21 +31,32 @@ def main():
         "4": ("割り算 (/)", divide),
         "5": ("べき乗 (**)", power),
     }
+    history = []
 
     while True:
         print("\n演算を選択してください:")
         for key, (name, _) in operations.items():
             print(f"  {key}. {name}")
-        print("  6. 終了")
+        print("  6. 計算履歴を表示")
+        print("  7. 終了")
 
-        choice = input("\n選択 (1-6): ").strip()
+        choice = input("\n選択 (1-7): ").strip()
 
-        if choice == "6":
+        if choice == "7":
             print("計算機を終了します。")
             break
 
+        if choice == "6":
+            if not history:
+                print("履歴はありません。")
+            else:
+                print("\n=== 計算履歴 ===")
+                for i, entry in enumerate(history, 1):
+                    print(f"  {i}. {entry}")
+            continue
+
         if choice not in operations:
-            print("無効な選択です。1〜6を入力してください。")
+            print("無効な選択です。1〜7を入力してください。")
             continue
 
         name, func = operations[choice]
@@ -54,7 +65,9 @@ def main():
 
         try:
             result = func(a, b)
-            print(f"結果: {a} {name.split()[1]} {b} = {result}")
+            expr = f"{a} {name.split()[1]} {b} = {result}"
+            print(f"結果: {expr}")
+            history.append(expr)
         except ValueError as e:
             print(f"エラー: {e}")
 
