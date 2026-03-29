@@ -15,6 +15,11 @@ def divide(a, b):
 def power(a, b):
     return a ** b
 
+def square_root(a):
+    if a < 0:
+        raise ValueError("負の数の平方根は計算できません")
+    return a ** 0.5
+
 def get_number(prompt):
     while True:
         try:
@@ -25,28 +30,29 @@ def get_number(prompt):
 def main():
     print("=== 簡単な計算機 ===")
     operations = {
-        "1": ("足し算 (+)", add),
-        "2": ("引き算 (-)", subtract),
-        "3": ("掛け算 (*)", multiply),
-        "4": ("割り算 (/)", divide),
-        "5": ("べき乗 (**)", power),
+        "1": ("足し算 (+)", add, 2),
+        "2": ("引き算 (-)", subtract, 2),
+        "3": ("掛け算 (*)", multiply, 2),
+        "4": ("割り算 (/)", divide, 2),
+        "5": ("べき乗 (**)", power, 2),
+        "6": ("平方根 (√)", square_root, 1),
     }
     history = []
 
     while True:
         print("\n演算を選択してください:")
-        for key, (name, _) in operations.items():
+        for key, (name, _, __) in operations.items():
             print(f"  {key}. {name}")
-        print("  6. 計算履歴を表示")
-        print("  7. 終了")
+        print("  7. 計算履歴を表示")
+        print("  8. 終了")
 
-        choice = input("\n選択 (1-7): ").strip()
+        choice = input("\n選択 (1-8): ").strip()
 
-        if choice == "7":
+        if choice == "8":
             print("計算機を終了します。")
             break
 
-        if choice == "6":
+        if choice == "7":
             if not history:
                 print("履歴はありません。")
             else:
@@ -56,17 +62,22 @@ def main():
             continue
 
         if choice not in operations:
-            print("無効な選択です。1〜7を入力してください。")
+            print("無効な選択です。1〜8を入力してください。")
             continue
 
-        name, func = operations[choice]
-        a = get_number("1つ目の数値: ")
-        b = get_number("2つ目の数値: ")
+        name, func, arity = operations[choice]
+        a = get_number("数値: " if arity == 1 else "1つ目の数値: ")
 
         try:
-            result = func(a, b)
-            expr = f"{a} {name.split()[1]} {b} = {result}"
-            print(f"結果: {expr}")
+            if arity == 1:
+                result = func(a)
+                expr = f"√{a} = {result}"
+                print(f"結果: {expr}")
+            else:
+                b = get_number("2つ目の数値: ")
+                result = func(a, b)
+                expr = f"{a} {name.split()[1]} {b} = {result}"
+                print(f"結果: {expr}")
             history.append(expr)
         except ValueError as e:
             print(f"エラー: {e}")
