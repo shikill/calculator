@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .calculator {
+      background: #16213e;
+      border-radius: 20px;
+      padding: 28px;
+      width: 360px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.4rem;
+      margin-bottom: 20px;
+      color: #a8d8ea;
+      letter-spacing: 2px;
+    }
+
+    .display {
+      background: #0f3460;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-end;
+    }
+
+    .display .expr {
+      font-size: 0.85rem;
+      color: #888;
+      min-height: 18px;
+      word-break: break-all;
+    }
+
+    .display .result {
+      font-size: 2rem;
+      font-weight: 600;
+      color: #e2e2e2;
+      word-break: break-all;
+    }
+
+    .display .error {
+      font-size: 0.9rem;
+      color: #ff6b6b;
+    }
+
+    .inputs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .inputs input {
+      flex: 1;
+      background: #0f3460;
+      border: 1px solid #1e4d8c;
+      border-radius: 8px;
+      color: #eee;
+      font-size: 1rem;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .inputs input:focus {
+      border-color: #a8d8ea;
+    }
+
+    .inputs input::placeholder { color: #555; }
+
+    #input-b-wrap { flex: 1; transition: opacity 0.2s; }
+    #input-b-wrap.hidden { opacity: 0; pointer-events: none; }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      padding: 14px 8px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      font-weight: 600;
+    }
+
+    button:active { transform: scale(0.96); }
+
+    .btn-op {
+      background: #0f3460;
+      color: #a8d8ea;
+    }
+    .btn-op:hover { background: #1a4a80; }
+    .btn-op.active {
+      background: #a8d8ea;
+      color: #0f3460;
+    }
+
+    .btn-calc {
+      background: #e94560;
+      color: #fff;
+      grid-column: span 3;
+    }
+    .btn-calc:hover { background: #c73652; }
+
+    .btn-clear {
+      background: #333a56;
+      color: #aaa;
+      grid-column: span 3;
+    }
+    .btn-clear:hover { background: #444d6e; }
+  </style>
+</head>
+<body>
+
+<div class="calculator">
+  <h1>CALCULATOR</h1>
+
+  <div class="display" id="display">
+    <div class="expr" id="expr"></div>
+    <div class="result" id="result">0</div>
+  </div>
+
+  <div class="inputs">
+    <input type="number" id="input-a" placeholder="数値 A" step="any">
+    <div id="input-b-wrap">
+      <input type="number" id="input-b" placeholder="数値 B" step="any" style="width:100%">
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button class="btn-op" data-op="add">＋ 足し算</button>
+    <button class="btn-op" data-op="subtract">－ 引き算</button>
+    <button class="btn-op" data-op="multiply">× 掛け算</button>
+    <button class="btn-op" data-op="divide">÷ 割り算</button>
+    <button class="btn-op" data-op="power">^ べき乗</button>
+    <button class="btn-op" data-op="sqrt">√ 平方根</button>
+    <button class="btn-calc" id="btn-calc">＝ 計算する</button>
+    <button class="btn-clear" id="btn-clear">C クリア</button>
+  </div>
+</div>
+
+<script>
+  let selectedOp = null;
+
+  const opButtons = document.querySelectorAll('.btn-op');
+  const inputA = document.getElementById('input-a');
+  const inputB = document.getElementById('input-b');
+  const inputBWrap = document.getElementById('input-b-wrap');
+  const exprEl = document.getElementById('expr');
+  const resultEl = document.getElementById('result');
+
+  opButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      opButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedOp = btn.dataset.op;
+      inputBWrap.classList.toggle('hidden', selectedOp === 'sqrt');
+      clearError();
+    });
+  });
+
+  document.getElementById('btn-calc').addEventListener('click', async () => {
+    if (!selectedOp) {
+      showError('演算を選択してください');
+      return;
+    }
+    const a = inputA.value.trim();
+    if (a === '') { showError('数値 A を入力してください'); return; }
+    const body = { operation: selectedOp, a };
+    if (selectedOp !== 'sqrt') {
+      const b = inputB.value.trim();
+      if (b === '') { showError('数値 B を入力してください'); return; }
+      body.b = b;
+    }
+
+    try {
+      const res = await fetch('/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showError(data.error);
+      } else {
+        exprEl.textContent = data.expr;
+        resultEl.className = 'result';
+        resultEl.textContent = data.result;
+      }
+    } catch {
+      showError('通信エラーが発生しました');
+    }
+  });
+
+  document.getElementById('btn-clear').addEventListener('click', () => {
+    inputA.value = '';
+    inputB.value = '';
+    exprEl.textContent = '';
+    resultEl.className = 'result';
+    resultEl.textContent = '0';
+    opButtons.forEach(b => b.classList.remove('active'));
+    selectedOp = null;
+    inputBWrap.classList.remove('hidden');
+  });
+
+  [inputA, inputB].forEach(el => {
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btn-calc').click();
+    });
+  });
+
+  function showError(msg) {
+    exprEl.textContent = '';
+    resultEl.className = 'error';
+    resultEl.textContent = msg;
+  }
+
+  function clearError() {
+    if (resultEl.classList.contains('error')) {
+      resultEl.className = 'result';
+      resultEl.textContent = '0';
+    }
+  }
+</script>
+</body>
+</html>
