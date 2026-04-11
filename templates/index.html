@@ -22,14 +22,14 @@
       background: #16213e;
       border-radius: 20px;
       padding: 28px;
-      width: 360px;
+      width: 320px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
 
     h1 {
       text-align: center;
-      font-size: 1.4rem;
-      margin-bottom: 20px;
+      font-size: 1.2rem;
+      margin-bottom: 16px;
       color: #a8d8ea;
       letter-spacing: 2px;
     }
@@ -37,79 +37,66 @@
     .display {
       background: #0f3460;
       border-radius: 12px;
-      padding: 16px 20px;
-      margin-bottom: 20px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
       min-height: 80px;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
       align-items: flex-end;
+      overflow: hidden;
     }
 
     .display .expr {
-      font-size: 0.85rem;
-      color: #888;
+      font-size: 0.8rem;
+      color: #7aa;
       min-height: 18px;
       word-break: break-all;
+      text-align: right;
     }
 
-    .display .result {
+    .display .current {
       font-size: 2rem;
       font-weight: 600;
       color: #e2e2e2;
       word-break: break-all;
+      text-align: right;
     }
 
     .display .error {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: #ff6b6b;
+      text-align: right;
     }
 
-    .inputs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .inputs input {
-      flex: 1;
-      background: #0f3460;
-      border: 1px solid #1e4d8c;
-      border-radius: 8px;
-      color: #eee;
-      font-size: 1rem;
-      padding: 10px 14px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .inputs input:focus {
-      border-color: #a8d8ea;
-    }
-
-    .inputs input::placeholder { color: #555; }
-
-    #input-b-wrap { flex: 1; transition: opacity 0.2s; }
-    #input-b-wrap.hidden { opacity: 0; pointer-events: none; }
-
+    /* 4列グリッド */
     .buttons {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 10px;
     }
 
     button {
-      padding: 14px 8px;
+      padding: 18px 8px;
       border: none;
       border-radius: 10px;
-      font-size: 0.95rem;
+      font-size: 1.1rem;
       cursor: pointer;
       transition: background 0.15s, transform 0.1s;
       font-weight: 600;
+      line-height: 1;
     }
 
-    button:active { transform: scale(0.96); }
+    button:active { transform: scale(0.94); }
 
+    /* 数字ボタン */
+    .btn-num {
+      background: #1e3a6e;
+      color: #dde;
+    }
+    .btn-num:hover { background: #254980; }
+
+    /* 四則演算ボタン */
     .btn-op {
       background: #0f3460;
       color: #a8d8ea;
@@ -120,19 +107,22 @@
       color: #0f3460;
     }
 
-    .btn-calc {
+    /* = ボタン */
+    .btn-eq {
       background: #e94560;
       color: #fff;
-      grid-column: span 3;
     }
-    .btn-calc:hover { background: #c73652; }
+    .btn-eq:hover { background: #c73652; }
 
-    .btn-clear {
+    /* C / その他ユーティリティ */
+    .btn-util {
       background: #333a56;
-      color: #aaa;
-      grid-column: span 3;
+      color: #aab;
     }
-    .btn-clear:hover { background: #444d6e; }
+    .btn-util:hover { background: #444d6e; }
+
+    /* 0 は2列分 */
+    .span2 { grid-column: span 2; }
   </style>
 </head>
 <body>
@@ -142,64 +132,160 @@
 
   <div class="display" id="display">
     <div class="expr" id="expr"></div>
-    <div class="result" id="result">0</div>
+    <div class="current" id="current">0</div>
   </div>
 
-  <div class="inputs">
-    <input type="number" id="input-a" placeholder="数値 A" step="any">
-    <div id="input-b-wrap">
-      <input type="number" id="input-b" placeholder="数値 B" step="any" style="width:100%">
-    </div>
-  </div>
-
+  <!--
+    レイアウト (4列):
+    [ C ] [ +/- ] [ √ ] [ ÷ ]
+    [ 7 ] [  8  ] [ 9 ] [ × ]
+    [ 4 ] [  5  ] [ 6 ] [ - ]
+    [ 1 ] [  2  ] [ 3 ] [ + ]
+    [  0 (×2)  ] [ ^ ] [ = ]
+                  [ . ]
+  -->
   <div class="buttons">
-    <button class="btn-op" data-op="add">＋ 足し算</button>
-    <button class="btn-op" data-op="subtract">－ 引き算</button>
-    <button class="btn-op" data-op="multiply">× 掛け算</button>
-    <button class="btn-op" data-op="divide">÷ 割り算</button>
-    <button class="btn-op" data-op="power">^ べき乗</button>
-    <button class="btn-op" data-op="sqrt">√ 平方根</button>
-    <button class="btn-calc" id="btn-calc">＝ 計算する</button>
-    <button class="btn-clear" id="btn-clear">C クリア</button>
+    <!-- 行1: ユーティリティ＋演算 -->
+    <button class="btn-util" id="btn-clear">C</button>
+    <button class="btn-util" id="btn-sign">+/-</button>
+    <button class="btn-op"  data-op="sqrt">√</button>
+    <button class="btn-op"  data-op="divide">÷</button>
+
+    <!-- 行2 -->
+    <button class="btn-num" data-num="7">7</button>
+    <button class="btn-num" data-num="8">8</button>
+    <button class="btn-num" data-num="9">9</button>
+    <button class="btn-op"  data-op="multiply">×</button>
+
+    <!-- 行3 -->
+    <button class="btn-num" data-num="4">4</button>
+    <button class="btn-num" data-num="5">5</button>
+    <button class="btn-num" data-num="6">6</button>
+    <button class="btn-op"  data-op="subtract">−</button>
+
+    <!-- 行4 -->
+    <button class="btn-num" data-num="1">1</button>
+    <button class="btn-num" data-num="2">2</button>
+    <button class="btn-num" data-num="3">3</button>
+    <button class="btn-op"  data-op="add">＋</button>
+
+    <!-- 行5 -->
+    <button class="btn-num span2" data-num="0">0</button>
+    <button class="btn-num" data-num=".">.</button>
+    <button class="btn-eq"  id="btn-eq">=</button>
   </div>
 </div>
 
 <script>
-  let selectedOp = null;
+  // --- 状態 ---
+  let currentInput = '0';   // 現在入力中の数字文字列
+  let previousInput = '';   // 1つ目のオペランド
+  let pendingOp = null;     // 選択済み演算
+  let justCalc = false;     // = 直後フラグ
 
-  const opButtons = document.querySelectorAll('.btn-op');
-  const inputA = document.getElementById('input-a');
-  const inputB = document.getElementById('input-b');
-  const inputBWrap = document.getElementById('input-b-wrap');
-  const exprEl = document.getElementById('expr');
-  const resultEl = document.getElementById('result');
+  const currentEl = document.getElementById('current');
+  const exprEl    = document.getElementById('expr');
+  const opBtns    = document.querySelectorAll('.btn-op');
 
-  opButtons.forEach(btn => {
+  // --- 表示更新 ---
+  function setDisplay(val, exprText = '') {
+    currentEl.className = 'current';
+    currentEl.textContent = val;
+    exprEl.textContent = exprText;
+  }
+
+  function showError(msg) {
+    currentEl.className = 'error';
+    currentEl.textContent = msg;
+    exprEl.textContent = '';
+  }
+
+  function highlightOp(op) {
+    opBtns.forEach(b => b.classList.toggle('active', b.dataset.op === op));
+  }
+
+  // --- 数字ボタン ---
+  document.querySelectorAll('.btn-num').forEach(btn => {
     btn.addEventListener('click', () => {
-      opButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedOp = btn.dataset.op;
-      inputBWrap.classList.toggle('hidden', selectedOp === 'sqrt');
-      clearError();
+      const ch = btn.dataset.num;
+      if (justCalc) { currentInput = '0'; justCalc = false; }
+
+      if (ch === '.') {
+        if (currentInput.includes('.')) return;
+        currentInput += '.';
+      } else if (currentInput === '0' || currentInput === '-0') {
+        currentInput = currentInput.startsWith('-') ? '-' + ch : ch;
+      } else {
+        if (currentInput.replace('-', '').length >= 15) return; // 桁数上限
+        currentInput += ch;
+      }
+      setDisplay(currentInput, exprEl.textContent);
     });
   });
 
-  document.getElementById('btn-calc').addEventListener('click', async () => {
-    if (!selectedOp) {
-      showError('演算を選択してください');
-      return;
-    }
-    const a = inputA.value.trim();
-    if (a === '') { showError('数値 A を入力してください'); return; }
-    const body = { operation: selectedOp, a };
-    if (selectedOp !== 'sqrt') {
-      const b = inputB.value.trim();
-      if (b === '') { showError('数値 B を入力してください'); return; }
-      body.b = b;
-    }
+  // --- 演算ボタン ---
+  opBtns.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const op = btn.dataset.op;
+
+      // √ は即時単項演算
+      if (op === 'sqrt') {
+        await computeAndDisplay('sqrt', currentInput, null);
+        pendingOp = null;
+        highlightOp(null);
+        return;
+      }
+
+      // 演算が既に保留中なら中間計算
+      if (pendingOp && !justCalc && previousInput !== '') {
+        await computeAndDisplay(pendingOp, previousInput, currentInput);
+        previousInput = currentInput; // 結果が次の left-hand side
+      } else {
+        previousInput = currentInput;
+      }
+
+      pendingOp = op;
+      justCalc = true; // 次の数字入力でリセット
+      highlightOp(op);
+      setDisplay(currentInput, `${previousInput} ${opSymbol(op)}`);
+    });
+  });
+
+  // --- = ボタン ---
+  document.getElementById('btn-eq').addEventListener('click', async () => {
+    if (!pendingOp || previousInput === '') return;
+    await computeAndDisplay(pendingOp, previousInput, currentInput);
+    pendingOp = null;
+    previousInput = '';
+    highlightOp(null);
+  });
+
+  // --- +/- ボタン ---
+  document.getElementById('btn-sign').addEventListener('click', () => {
+    if (currentInput === '0') return;
+    currentInput = currentInput.startsWith('-')
+      ? currentInput.slice(1)
+      : '-' + currentInput;
+    setDisplay(currentInput, exprEl.textContent);
+  });
+
+  // --- C ボタン ---
+  document.getElementById('btn-clear').addEventListener('click', () => {
+    currentInput  = '0';
+    previousInput = '';
+    pendingOp     = null;
+    justCalc      = false;
+    highlightOp(null);
+    setDisplay('0', '');
+  });
+
+  // --- API 呼び出し ---
+  async function computeAndDisplay(op, a, b) {
+    const body = { operation: op, a };
+    if (op !== 'sqrt') body.b = b;
 
     try {
-      const res = await fetch('/calculate', {
+      const res  = await fetch('/calculate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
@@ -207,44 +293,46 @@
       const data = await res.json();
       if (!res.ok) {
         showError(data.error);
+        currentInput = '0';
       } else {
-        exprEl.textContent = data.expr;
-        resultEl.className = 'result';
-        resultEl.textContent = data.result;
+        currentInput = String(data.result);
+        setDisplay(currentInput, data.expr);
+        justCalc = true;
       }
     } catch {
       showError('通信エラーが発生しました');
+      currentInput = '0';
     }
-  });
-
-  document.getElementById('btn-clear').addEventListener('click', () => {
-    inputA.value = '';
-    inputB.value = '';
-    exprEl.textContent = '';
-    resultEl.className = 'result';
-    resultEl.textContent = '0';
-    opButtons.forEach(b => b.classList.remove('active'));
-    selectedOp = null;
-    inputBWrap.classList.remove('hidden');
-  });
-
-  [inputA, inputB].forEach(el => {
-    el.addEventListener('keydown', e => {
-      if (e.key === 'Enter') document.getElementById('btn-calc').click();
-    });
-  });
-
-  function showError(msg) {
-    exprEl.textContent = '';
-    resultEl.className = 'error';
-    resultEl.textContent = msg;
   }
 
-  function clearError() {
-    if (resultEl.classList.contains('error')) {
-      resultEl.className = 'result';
-      resultEl.textContent = '0';
+  // --- キーボード対応 ---
+  const keyMap = {
+    '0':'0','1':'1','2':'2','3':'3','4':'4',
+    '5':'5','6':'6','7':'7','8':'8','9':'9',
+    '.':'.',',':'.'
+  };
+  document.addEventListener('keydown', e => {
+    if (keyMap[e.key] !== undefined) {
+      document.querySelector(`[data-num="${keyMap[e.key]}"]`)?.click();
+    } else if (e.key === '+') document.querySelector('[data-op="add"]')?.click();
+    else if (e.key === '-') document.querySelector('[data-op="subtract"]')?.click();
+    else if (e.key === '*') document.querySelector('[data-op="multiply"]')?.click();
+    else if (e.key === '/') { e.preventDefault(); document.querySelector('[data-op="divide"]')?.click(); }
+    else if (e.key === '^') document.querySelector('[data-op="power"]')?.click();
+    else if (e.key === 'Enter' || e.key === '=') document.getElementById('btn-eq')?.click();
+    else if (e.key === 'Escape') document.getElementById('btn-clear')?.click();
+    else if (e.key === 'Backspace') {
+      if (currentInput.length > 1) {
+        currentInput = currentInput.slice(0, -1);
+      } else {
+        currentInput = '0';
+      }
+      setDisplay(currentInput, exprEl.textContent);
     }
+  });
+
+  function opSymbol(op) {
+    return { add:'＋', subtract:'−', multiply:'×', divide:'÷', power:'^' }[op] || op;
   }
 </script>
 </body>
